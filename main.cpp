@@ -4,6 +4,7 @@
 
 /*
     4. Finish a more real solution
+    5. Ordered and anti-Ordered fails when an error occurs at the beginning but not the front
 
     DONE:
     1. Add difficulty were all the errors are at the beginning of the solar system
