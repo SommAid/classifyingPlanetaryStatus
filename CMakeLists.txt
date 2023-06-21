@@ -3,4 +3,4 @@ project(classifyingPlanetaryStatus)
 
 set(CMAKE_CXX_STANDARD 14)
 
-add_executable(classifyingPlanetaryStatus main.cpp)
+add_executable(classifyingPlanetaryStatus main.cpp myProblem.h)

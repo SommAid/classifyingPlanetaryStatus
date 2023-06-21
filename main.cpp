@@ -1,303 +1,197 @@
 // classifyPlanetarySystems.cpp : This file contains the 'main' function. Program execution begins and ends there.
-// Testing this change
+// VER 1.4.1
+// Version changes since publish where 1.0.0 is launch *.*.x where x represents changes before launch
+
+/*
+    4. Finish a more real solution
+
+    DONE:
+    1. Add difficulty were all the errors are at the beginning of the solar system
+    2. Add difficulty were all the errors are at the end of the solar system
+    3. Create brutal difficult were mixed difficulty is called but the errors are increased
+
+*/
 
 // the problem generator and answer
-#include <iostream>
-#include <vector>
+#include "myProblem.h"
+#include <map>
 #include <string>
 
-static std::string classifyPlanetarySystem(std::vector<int>& solarSystem, int errors);
 static void print(std::vector<int>& solarSystem, std::vector<int>& posErrors);
 static void print(std::vector<int>& solarSystem);
 
-// Struct that contains all the pertanent information for creating a solar system
-typedef struct solarSystemCreator{
-    std::vector<int> planets = {}, posErrors = {};
-    int size, startingSize, numErrors, commonSize;
-    std::string ans;
-
-}solarSystemCreator;
-
-// checks if newNum is in nums if so true else false
-static bool findNum(std::vector<int>&nums, int& newNum)
+bool checkAntiOrdered(std::vector<int>& solarSystem, int numErrors)
 {
-    for(const int& i: nums)
-        if (i == newNum)
+    std::cout << "CHECK ANTIORDERED\n";
+    int len = solarSystem.size(), firstNotError = solarSystem[1], firstNotErrorPos = 1, counterErrors = 0, prevNotError, curr;
+    for(int j = 2; j < (numErrors + 1) && j < len; j++)
+    {
+        curr = solarSystem[j];
+        if(curr > firstNotError)
+        {
+            firstNotError = curr;
+            firstNotErrorPos = j;
+        }
+    }
+    counterErrors = firstNotErrorPos - 1;
+    prevNotError = firstNotError;
+    for(int j = firstNotErrorPos + 1; j < len; j++)
+    {
+        curr = solarSystem[j];
+        if(curr > prevNotError)
+        {
+            counterErrors++;
+        }
+        else
+        {
+            prevNotError = curr;
+        }
+    }
+    //std::cout << "counterErrors::" << counterErrors << " numErrors::" << numErrors << "\n";
+    return counterErrors == numErrors;
+}
+
+bool checkOrdered(std::vector<int>& solarSystem, std::vector<int>& foundErrors, int numErrors)
+{
+    std::cout << "CHECK ORDERED\n";
+    int len = solarSystem.size(), firstNotError = solarSystem[1], firstNotErrorPos = 1, counterErrors = 0, prevNotError, curr;
+    for(int j = 2; j < numErrors + 1 && j < len; j++)
+    {
+        curr = solarSystem[j];
+        if(curr < firstNotError)
+        {
+            firstNotError = curr;
+            firstNotErrorPos = j;
+        }
+    }
+
+    // Testing code delete later
+    {
+        for(int j = 1; j < firstNotErrorPos; j++)
+        {
+            foundErrors.push_back(j);
+        }
+    }
+
+    counterErrors = firstNotErrorPos - 1;
+    prevNotError = firstNotError;
+    for(int j = firstNotErrorPos + 1; j < len; j++)
+    {
+        curr = solarSystem[j];
+        if(curr < prevNotError)
+        {
+            foundErrors.push_back(j);
+            counterErrors++;
+        }
+        else
+        {
+            prevNotError = curr;
+        }
+    }
+    //std::cout << "counterErrors::" << counterErrors << " numErrors::" << numErrors << "\n";
+    return counterErrors == numErrors;
+}
+
+bool checkSimilar(std::vector<int>& solarSystem, int numErrors)
+{
+    std::map<int, int> groupSimilarPlanets;
+    int len = solarSystem.size(), counterErrors = 0, target = len - numErrors  - 1, prevNotError, curr;
+    for(int j = 1; j < len; j++)
+    {
+        curr = solarSystem[j];
+        if(groupSimilarPlanets.find(curr) != groupSimilarPlanets.end())
+        {
+            groupSimilarPlanets[curr]++;
+        }
+        else
+            groupSimilarPlanets.insert({curr, 1});
+    }
+    for(const std::pair<int, int>& i : groupSimilarPlanets)
+    {
+        //std::cout << "TOTALVALUES::" << i.second << " TARGET::" << target << "\n";
+        if(i.second == target)
             return true;
+    }
+    //print(solarSystem);
     return false;
 }
 
-// creates a vector of positions where error planets will be random
-static void createRandErrorPlanetPos(solarSystemCreator& solarSystem)
+// My solution to the problem, will not work for brutal difficulty need to create a way to double-check estimations
+static std::string classifyPlanetarySystem(std::vector<int>& solarSystem, std::vector<int>& posErrors, int numErrors)
 {
-    int randNum, errorSize = 0;
-    while (errorSize < solarSystem.numErrors)
+    srand(3);
+    // let's get a rough estimate of what type of solar system we are looking at
+    int len = solarSystem.size(), estimation = len - 1 -  ((len / 10) + numErrors), diffInY, diffInX, x2, delta;
+    //int target = len - 1 - numErrors;
+    // determine[0] is x <= -1 determine[1] is -1 < x < 1 determine[2] x >= 1
+    int determine[3]{ 0, 0, 0 };
+    for (int planet = 1; planet < len; planet++)
     {
-        randNum = (int)(rand() % solarSystem.size);
-        if (!findNum(solarSystem.posErrors, randNum))
-        {
-            errorSize++;
-            solarSystem.posErrors.push_back(randNum);
-        }
-    }
-}
-// creates a vector of positions where error planets will be at the beginning
-static void createErrorPlanetsBeg(solarSystemCreator& solarSystem)
-{
-    for(int j = 0; j < solarSystem.numErrors; j++) {
-        solarSystem.posErrors.push_back(j);
-    }
-}
-// creates a vector of positions where error planets will be at the end
-static void createErrorPlanetsEnd(solarSystemCreator& solarSystem)
-{
-    for(int j = 0; j < solarSystem.numErrors; j++) {
-        solarSystem.posErrors.push_back(solarSystem.size - 1 - j);
-    }
-}
-
-// creates planets with the same size
-static void similar(solarSystemCreator& solarSystem)
-{
-    for (int j = 0; j < solarSystem.size; j++)
-    {
-        if (findNum(solarSystem.posErrors, j))
-            solarSystem.planets.push_back(int(rand() % solarSystem.commonSize));
-        else
-            solarSystem.planets.push_back(solarSystem.commonSize);
-    }
-}
-
-// creates a solar system with mixed planets
-static void mixed(solarSystemCreator& solarSystem)
-{
-    for (int i = 0; i < solarSystem.size; i++)
-    {
-        int planetSize = rand() % 10000000;
-        solarSystem.planets.push_back(planetSize);
-    }
-}
-
-// creates a solar system were the planets are arranged from largest to smallest
-static void antiOrdered(solarSystemCreator& solarSystem)
-{
-    int prevNotError = solarSystem.startingSize, decreaseAmt = solarSystem.startingSize / solarSystem.size + 1, isFirstInserted = false;
-    for (int j = 0; j < solarSystem.size - 1; j++)
-    {
-        if (findNum(solarSystem.posErrors, j))
-            solarSystem.planets.push_back(rand() % (prevNotError)+(prevNotError + 1));
-        else if (!isFirstInserted)
-        {
-            isFirstInserted = true;
-            solarSystem.planets.push_back(solarSystem.startingSize);
-        }
+        x2 = uniqueRand(1, len-1, planet);
+        diffInY = solarSystem[planet] - solarSystem[x2];
+        diffInX = planet - x2;
+        delta = diffInY / diffInX;
+        if (delta <= -1)
+            determine[0]++;
+        else if (delta >= 1)
+            determine[2]++;
         else
         {
-            prevNotError = prevNotError - int(rand() % decreaseAmt);
-            solarSystem.planets.push_back(prevNotError);
+            determine[1]++;
         }
     }
+    // std::cout << "Size::" << len << " numErrors::" << numErrors << "\n";
+    // std::cout << "Target::" << target <<  " Estimation::" << estimation << "\n";
+    // std::cout << "determine[0]::" << determine[0] << "\ndetermine[1]::" << determine[1] << "\ndetermine[2]::" << determine[2] << "\n";
 
-}
-
-// creates a solar system were the planets are arranged from smalledst to largest
-static void ordered(solarSystemCreator& solarSystem)
-{
-    int prevNotError = solarSystem.startingSize, IncreaseAmt = solarSystem.startingSize / solarSystem.size + 1, isFirstInserted = false;
-    for (int j = 0; j < solarSystem.size; j++)
+    if (determine[0] >= estimation && checkAntiOrdered(solarSystem, numErrors))
     {
-        if (findNum(solarSystem.posErrors, j))
-            solarSystem.planets.push_back(rand() % (prevNotError));
-        else if (!isFirstInserted)
-        {
-            isFirstInserted = true;
-            solarSystem.planets.push_back(solarSystem.startingSize);
-        }
-        else
-        {
-            prevNotError = 1 + prevNotError + int(rand() % IncreaseAmt);
-            solarSystem.planets.push_back(prevNotError);
-        }
+        // we probably have antiordered
+        return "antiordered";
     }
-}
-
-/*
-    With the four functions done we need to finish this "control" method
-    This method will dish out the different types of solar systems
-    Main functionality:
-    determine # of errors (errors)
-    determine # planets in the solar system (size)
-    determine the size of the first planet if required (startingSize)
-    determine the size of the sun
-*/
-static void createSolarSystem(solarSystemCreator& solarSystem)
-{
-    int type = rand() % 4;
-    int sun = 100000000;
-    solarSystem.planets.push_back(sun);
-    switch (type)
+    else if (determine[1] >= estimation && checkSimilar(solarSystem, numErrors))
     {
-        case 0:
-        {
-            // similar
-            solarSystem.ans = "similar";
-            solarSystem.commonSize = int(rand() % sun);
-            similar(solarSystem);
-            return;
-        }
-        case 1:
-        {
-            // mixed
-            mixed(solarSystem);
-            solarSystem.ans = "mixed";
-            return;
-        }
-        case 2:
-        {
-            // antiOrdered
-            solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
-            antiOrdered(solarSystem);
-            solarSystem.ans = "antiordered";
-            return;
-        }
-        case 3:
-        {
-            // ordered
-            solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
-            ordered(solarSystem);
-            solarSystem.ans = "ordered";
-            return;
-        }
+        // we probably have similar
+        return "similar";
     }
-}
-
-// creates a really ez solar system
-static void createSystemEz(solarSystemCreator& solarSystem)
-{
-    solarSystem.size = int(rand() % 100) + 100;
-    solarSystem.numErrors = int(rand() % 3);
-    createSolarSystem(solarSystem);
-}
-
-// creates a solar system with mediocre difficulty
-static void createSystemMed(solarSystemCreator& solarSystem)
-{
-    solarSystem.size = int(rand() % 500) + 250;
-    solarSystem.numErrors = int(rand() % 10);
-    createSolarSystem(solarSystem);
-}
-
-// creates a solar system with a hard level of difficulty
-static void createSystemHard(solarSystemCreator& solarSystem)
-{
-    solarSystem.size = int(rand() % 1000) + 500;
-    solarSystem.numErrors = int(rand() % 50);
-    createRandErrorPlanetPos(solarSystem);
-    createSolarSystem(solarSystem);
-}
-
-// creates a hard solar system, but all the errors are at the beginning
-static void createSystemFrontErrors(solarSystemCreator& solarSystem)
-{
-    solarSystem.size = int(rand() % 1000) + 500;
-    solarSystem.numErrors = int(rand() % 50);
-    createErrorPlanetsBeg(solarSystem);
-    createSolarSystem(solarSystem);
-}
-
-// creates a hard solar system, but all the errors are at the end
-static void createSystemEndErrors(solarSystemCreator& solarSystem)
-{
-    solarSystem.size = int(rand() % 1000) + 500;
-    solarSystem.numErrors = int(rand() % 50);
-    createErrorPlanetsEnd(solarSystem);
-    createSolarSystem(solarSystem);
-}
-
-// Use this function multiple times to create a brutally difficult combination of solar systems
-static void createSystemBrutal(solarSystemCreator& solarSystem)
-{
-    solarSystem.size = int(rand() % 1000) + 500;
-    solarSystem.numErrors = int(rand() % 50);
-    int whereErrors = int(rand()%3);
-    switch (whereErrors)
+    else if (determine[2] >= estimation && checkOrdered(solarSystem, posErrors, numErrors))
     {
-        case 0:
-            createRandErrorPlanetPos(solarSystem);
-            break;
-        case 1:
-            createErrorPlanetsBeg(solarSystem);
-            break;
-        case 2:
-            createErrorPlanetsEnd(solarSystem);
-            break;
-        default:
-            createRandErrorPlanetPos(solarSystem);
+        // we probably have ordered
+        return "ordered";
     }
-
-    // if mixed solar system is created make it use a combination of similar, mixed, antiOrdered, and ordered
-    int type = rand() % 4;
-    int sun = 100000000;
-    solarSystem.planets.push_back(sun);
-    switch (type)
+    else
     {
-        case 0:
-        {
-            // similar
-            solarSystem.ans = "similar";
-            solarSystem.commonSize = int(rand() % sun);
-            similar(solarSystem);
-            return;
-        }
-        case 1:
-        {
-            // mixed
-            mixed(solarSystem);
-            solarSystem.ans = "mixed";
-            return;
-        }
-        case 2:
-        {
-            // antiOrdered
-            solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
-            antiOrdered(solarSystem);
-            solarSystem.ans = "antiordered";
-            return;
-        }
-        case 3:
-        {
-            // ordered
-            solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
-            ordered(solarSystem);
-            solarSystem.ans = "ordered";
-            return;
-        }
+        return "mixed";
     }
-    createSolarSystem(solarSystem);
-}
+};
 
-/*
-    TODO:
-    1. Add difficulty were all the errors are at the beginning of the solar system
-    2. Add diffiuclty were all the errors are at the end of the solar system
-    3. Create brutal difficult were mixed difficulty is called but the errors are increased
-*/
-
-// This is certainly a main function of all time
+// This is a main function of all time
 int main()
 {
-    solarSystemCreator creator = solarSystemCreator{};
     srand(time(0));
-    createSystemHard(creator);
-    print(creator.planets, creator.posErrors);
-    std::vector<int> test {10000, 1, 2, 3, 4, 1};
-    std::string a = classifyPlanetarySystem(test, 1);
-    //std::string a = classifyPlanetarySystem(creator.planets, creator.numErrors);
-    std::cout << "Expected::" << creator.ans << "\n";
-    std::cout << "Actual::" << a << "\n";
+    bool errorOccured = false;
+    std::vector<int> foundErrors;
+    for(int j = 0; j < 1000 && !errorOccured; j++) {
+        solarSystemCreator creator = solarSystemCreator{};
+        createSystemMed(creator);
+        std::string a = classifyPlanetarySystem(creator.planets, foundErrors, creator.numErrors);
+        if (creator.ans != a) {
+            std::cout << "___ERROR OCCURED___\n";
+            std::cout << "Expected::" << creator.ans << "\n";
+            std::cout << "Actual::" << a << "\n";
+            std::cout << "PASSED::" << j << "\n";
+            print(creator.planets, creator.posErrors);
+            std::cout << "FOUND__\n";
+            print(foundErrors);
+            errorOccured = true;
+        }
+    }
+    if(!errorOccured)
+        std::cout << "TEST PASSED\n";
+    else
+        std::cout << "TEST FAILED\n";
 
     return 0;
-
 }
 
 // print functions
@@ -316,7 +210,7 @@ static void print(std::vector<int>& solarSystem, std::vector<int>& posErrors)
     int curr;
     for (int iter = 0; iter < solarSystem.size(); iter++)
     {
-        curr = iter - 1;
+        curr = iter-1;
         if (findNum(posErrors, curr))
         {
             std::cout << pos++ << " : " << solarSystem[iter] << "<---Error\n";
@@ -324,53 +218,10 @@ static void print(std::vector<int>& solarSystem, std::vector<int>& posErrors)
         else
             std::cout << pos++ << " : " << solarSystem[iter] << "\n";
     }
-}
-
-// My solution to the problem
-static std::string classifyPlanetarySystem(std::vector<int>& solarSystem, int errors)
-{
-    // lets get a rough estimate of what type of solar system we are looking at
-    int len = solarSystem.size(), target = len - 1 - errors, diffInY, diffInX, delta, isOrdered, isAntiordered, isSimilar;
-
-    // determine[0] is x <= -1 determine[1] is -1 < x < 1 determine[2] x >= 1
-    int determine[3]{ 0, 0, 0 };
-    for (int planet = 1; planet < len - 1; planet++)
+    std::cout << "Location of errors\n";
+    for(const int& iter : posErrors)
     {
-        diffInY = solarSystem[planet] - solarSystem[planet + 1];
-        diffInX = planet - (planet + 1);
-        delta = diffInY / diffInX;
-        if (delta <= -1)
-            determine[0]++;
-        else if (delta >= 1)
-            determine[2]++;
-        else
-        {
-            determine[1]++;
-        }
-    }
-
-    std::cout << "Size::" << len << " numErrors::" << errors << "\n";
-    std::cout << "Target::" << target << "\n";
-    std::cout << "determine[0]::" << determine[0] << "\ndetermine[1]::" << determine[1] << "\ndetermine[2]::" << determine[2] << "\n";
-
-    if ((determine[0] >= (target - errors - 1)) && (determine[0] <= (target + errors + 1)))
-    {
-        // we probably have antiordered
-        return "antiordered";
-    }
-    else if ((determine[1] >= (target - errors - 1)) && (determine[1] <= (target + errors + 1)))
-    {
-        // we probably have similar
-        return "similar";
-    }
-    else if ((determine[2] >= (target - errors - 1)) && (determine[2] <= (target + errors + 1)))
-    {
-        // we probably have ordered
-        return "ordered";
-    }
-    else
-    {
-        return "mixed";
+        std::cout << iter+1 << "\n";
     }
 }
 
