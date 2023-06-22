@@ -27,7 +27,7 @@ static bool findNum(std::vector<int>&nums, int& newNum)
 }
 
 // just wanted an excuse for xor shenanigans
-int uniqueRand(int min, int max, int notAllowed)
+static int uniqueRand(int min, int max, int notAllowed)
 {
     int randNum = rand()%max + min;
     while(!(randNum xor notAllowed))

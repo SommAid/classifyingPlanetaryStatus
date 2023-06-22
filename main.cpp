@@ -15,8 +15,8 @@
 
 // the problem generator and answer
 #include "myProblem.h"
-#include <map>
 #include <string>
+#include <map>
 
 static void print(std::vector<int>& solarSystem, std::vector<int>& posErrors);
 static void print(std::vector<int>& solarSystem);
@@ -25,7 +25,7 @@ bool checkAntiOrdered(std::vector<int>& solarSystem, int numErrors)
 {
     std::cout << "CHECK ANTIORDERED\n";
     int len = solarSystem.size(), firstNotError = solarSystem[1], firstNotErrorPos = 1, counterErrors = 0, prevNotError, curr;
-    for(int j = 2; j < (numErrors + 1) && j < len; j++)
+    for(int j = 2; j < (numErrors + 2) && j < len; j++)
     {
         curr = solarSystem[j];
         if(curr > firstNotError)
@@ -56,7 +56,7 @@ bool checkOrdered(std::vector<int>& solarSystem, std::vector<int>& foundErrors, 
 {
     std::cout << "CHECK ORDERED\n";
     int len = solarSystem.size(), firstNotError = solarSystem[1], firstNotErrorPos = 1, counterErrors = 0, prevNotError, curr;
-    for(int j = 2; j < numErrors + 1 && j < len; j++)
+    for(int j = 2; j < numErrors + 2 && j < len; j++)
     {
         curr = solarSystem[j];
         if(curr < firstNotError)
@@ -107,7 +107,7 @@ bool checkSimilar(std::vector<int>& solarSystem, int numErrors)
         else
             groupSimilarPlanets.insert({curr, 1});
     }
-    for(const std::pair<int, int>& i : groupSimilarPlanets)
+    for (const std::pair<int, int>& i : groupSimilarPlanets)
     {
         //std::cout << "TOTALVALUES::" << i.second << " TARGET::" << target << "\n";
         if(i.second == target)
@@ -169,18 +169,24 @@ static std::string classifyPlanetarySystem(std::vector<int>& solarSystem, std::v
 // This is a main function of all time
 int main()
 {
+//    solarSystemCreator creator = solarSystemCreator{};
+//    creator.numErrorsBrutal = 0;
+//    createSystemBrutal(creator);
+//    std::string a = classifyPlanetarySystem(creator.planets, creator.numErrorsBrutal);
+//    Assert::That(a, Equals(creator.ans));
     srand(time(0));
     bool errorOccured = false;
     std::vector<int> foundErrors;
     for(int j = 0; j < 1000 && !errorOccured; j++) {
         solarSystemCreator creator = solarSystemCreator{};
-        createSystemMed(creator);
+        createSystemFrontErrors(creator);
         std::string a = classifyPlanetarySystem(creator.planets, foundErrors, creator.numErrors);
         if (creator.ans != a) {
-            std::cout << "___ERROR OCCURED___\n";
+            std::cout << "___ERROR_OCCURED___\n";
             std::cout << "Expected::" << creator.ans << "\n";
             std::cout << "Actual::" << a << "\n";
             std::cout << "PASSED::" << j << "\n";
+            std::cout << "NUM_OF_ERRORS::" << creator.numErrors << "\n";
             print(creator.planets, creator.posErrors);
             std::cout << "FOUND__\n";
             print(foundErrors);
@@ -191,7 +197,6 @@ int main()
         std::cout << "TEST PASSED\n";
     else
         std::cout << "TEST FAILED\n";
-
     return 0;
 }
 
