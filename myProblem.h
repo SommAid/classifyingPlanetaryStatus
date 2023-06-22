@@ -62,7 +62,7 @@ static void createErrorPlanetsBeg(solarSystemCreator& solarSystem)
 static void createErrorPlanetsEnd(solarSystemCreator& solarSystem)
 {
     for(int j = 0; j < solarSystem.numErrors; j++) {
-        solarSystem.posErrors.push_back(solarSystem.size - 1 - j);
+        solarSystem.posErrors.push_back(solarSystem.size - 2 - j);
     }
 }
 
@@ -95,7 +95,7 @@ static void antiOrdered(solarSystemCreator& solarSystem)
     for (int j = 0; j < solarSystem.size - 1; j++)
     {
         if (findNum(solarSystem.posErrors, j) && !isFirstInserted)
-            solarSystem.planets.push_back(rand() % solarSystem.startingSize);
+            solarSystem.planets.push_back(rand() % (solarSystem.startingSize - decreaseAmt * solarSystem.numErrors));
         else if (findNum(solarSystem.posErrors, j))
             solarSystem.planets.push_back(rand() % (solarSystem.planets[0] - prevNotError - 1)+(prevNotError + 1));
         else if (!isFirstInserted)
@@ -119,7 +119,9 @@ static void ordered(solarSystemCreator& solarSystem)
     for (int j = 0; j < solarSystem.size; j++)
     {
         if (findNum(solarSystem.posErrors, j) && !isFirstInserted)
-            solarSystem.planets.push_back(rand() % (solarSystem.planets[0] - solarSystem.startingSize - 1) + solarSystem.startingSize + 1);
+        {
+            solarSystem.planets.push_back(rand() % (solarSystem.planets[0] - (solarSystem.startingSize) - 1) + (solarSystem.startingSize + IncreaseAmt * solarSystem.numErrors) + 1);
+        }
         else if (findNum(solarSystem.posErrors, j))
             solarSystem.planets.push_back(rand() % (prevNotError));
         else if (!isFirstInserted)

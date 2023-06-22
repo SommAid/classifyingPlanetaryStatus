@@ -25,7 +25,7 @@ bool checkAntiOrdered(std::vector<int>& solarSystem, int numErrors)
 {
     std::cout << "CHECK ANTIORDERED\n";
     int len = solarSystem.size(), firstNotError = solarSystem[1], firstNotErrorPos = 1, counterErrors = 0, prevNotError, curr;
-    for(int j = 2; j < (numErrors + 2) && j < len; j++)
+    for(int j = 2; j < (numErrors+2) && j < len; j++)
     {
         curr = solarSystem[j];
         if(curr > firstNotError)
@@ -36,7 +36,33 @@ bool checkAntiOrdered(std::vector<int>& solarSystem, int numErrors)
     }
     counterErrors = firstNotErrorPos - 1;
     prevNotError = firstNotError;
-    for(int j = firstNotErrorPos + 1; j < len; j++)
+    //std::cout << "firstNotError::" << prevNotError << " firstNotErrorPos::" << firstNotErrorPos << "\n";
+
+    int isTrueStart = firstNotError, isTrueStartPos = firstNotErrorPos, maxNotErrors = 0, countNotErrors = 0;
+    for(int j  = 1; j <= firstNotErrorPos; j++)
+    {
+        curr = solarSystem[j];
+        for(int ins = j+1; ins <= firstNotErrorPos*2+1 && ins < len; ins++)
+        {
+            if(curr > solarSystem[ins])
+            {
+                countNotErrors++;
+            }
+        }
+        if(countNotErrors > maxNotErrors)
+        {
+            maxNotErrors = countNotErrors;
+            isTrueStartPos = j;
+            isTrueStart = curr;
+        }
+        countNotErrors = 0;
+    }
+    counterErrors = isTrueStartPos - 1;
+    prevNotError = isTrueStart;
+
+    //std::cout << "isTrueStart::" << isTrueStart << " isTrueStartPos::" << isTrueStartPos << "\n";
+
+    for(int j = isTrueStartPos + 1; j < len; j++)
     {
         curr = solarSystem[j];
         if(curr > prevNotError)
@@ -48,11 +74,11 @@ bool checkAntiOrdered(std::vector<int>& solarSystem, int numErrors)
             prevNotError = curr;
         }
     }
-    //std::cout << "counterErrors::" << counterErrors << " numErrors::" << numErrors << "\n";
+    //std::cout << "counterErorrers::" << counterErrors << " numErrors::" << numErrors << "\n";
     return counterErrors == numErrors;
 }
 
-bool checkOrdered(std::vector<int>& solarSystem, std::vector<int>& foundErrors, int numErrors)
+bool checkOrdered(std::vector<int>& solarSystem, int numErrors)
 {
     std::cout << "CHECK ORDERED\n";
     int len = solarSystem.size(), firstNotError = solarSystem[1], firstNotErrorPos = 1, counterErrors = 0, prevNotError, curr;
@@ -65,23 +91,40 @@ bool checkOrdered(std::vector<int>& solarSystem, std::vector<int>& foundErrors, 
             firstNotErrorPos = j;
         }
     }
-
-    // Testing code delete later
-    {
-        for(int j = 1; j < firstNotErrorPos; j++)
-        {
-            foundErrors.push_back(j);
-        }
-    }
-
     counterErrors = firstNotErrorPos - 1;
     prevNotError = firstNotError;
-    for(int j = firstNotErrorPos + 1; j < len; j++)
+    //std::cout << "firstNotError::" << prevNotError << " firstNotErrorPos::" << firstNotErrorPos << "\n";
+
+    int isTrueStart = firstNotError, isTrueStartPos = firstNotErrorPos, maxNotErrors = 0, countNotErrors = 0;
+    for(int j  = 1; j <= firstNotErrorPos; j++)
+    {
+        curr = solarSystem[j];
+        for(int ins = j+1; ins <= firstNotErrorPos*2+1 && ins < len; ins++)
+        {
+            if(curr < solarSystem[ins])
+            {
+                countNotErrors++;
+            }
+        }
+        if(countNotErrors > maxNotErrors )
+        {
+            maxNotErrors = countNotErrors;
+            isTrueStartPos = j;
+            isTrueStart = curr;
+        }
+        countNotErrors = 0;
+    }
+    counterErrors = isTrueStartPos - 1;
+    prevNotError = isTrueStart;
+
+    //std::cout << "isTrueStart::" << isTrueStart << " isTrueStartPos::" << isTrueStartPos << "\n";
+
+
+    for(int j = isTrueStartPos + 1; j < len; j++)
     {
         curr = solarSystem[j];
         if(curr < prevNotError)
         {
-            foundErrors.push_back(j);
             counterErrors++;
         }
         else
@@ -118,7 +161,7 @@ bool checkSimilar(std::vector<int>& solarSystem, int numErrors)
 }
 
 // My solution to the problem, will not work for brutal difficulty need to create a way to double-check estimations
-static std::string classifyPlanetarySystem(std::vector<int>& solarSystem, std::vector<int>& posErrors, int numErrors)
+static std::string classifyPlanetarySystem(std::vector<int>& solarSystem, int numErrors)
 {
     srand(3);
     // let's get a rough estimate of what type of solar system we are looking at
@@ -155,7 +198,7 @@ static std::string classifyPlanetarySystem(std::vector<int>& solarSystem, std::v
         // we probably have similar
         return "similar";
     }
-    else if (determine[2] >= estimation && checkOrdered(solarSystem, posErrors, numErrors))
+    else if (determine[2] >= estimation && checkOrdered(solarSystem, numErrors))
     {
         // we probably have ordered
         return "ordered";
@@ -175,12 +218,12 @@ int main()
 //    std::string a = classifyPlanetarySystem(creator.planets, creator.numErrorsBrutal);
 //    Assert::That(a, Equals(creator.ans));
     srand(time(0));
-    bool errorOccured = false;
     std::vector<int> foundErrors;
+    bool errorOccured = false;
     for(int j = 0; j < 1000 && !errorOccured; j++) {
         solarSystemCreator creator = solarSystemCreator{};
-        createSystemFrontErrors(creator);
-        std::string a = classifyPlanetarySystem(creator.planets, foundErrors, creator.numErrors);
+        createSystemEndErrors(creator);
+        std::string a = classifyPlanetarySystem(creator.planets, creator.numErrors);
         if (creator.ans != a) {
             std::cout << "___ERROR_OCCURED___\n";
             std::cout << "Expected::" << creator.ans << "\n";
@@ -188,8 +231,6 @@ int main()
             std::cout << "PASSED::" << j << "\n";
             std::cout << "NUM_OF_ERRORS::" << creator.numErrors << "\n";
             print(creator.planets, creator.posErrors);
-            std::cout << "FOUND__\n";
-            print(foundErrors);
             errorOccured = true;
         }
     }
