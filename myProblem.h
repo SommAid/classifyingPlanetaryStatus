@@ -30,7 +30,7 @@ static bool findNum(std::vector<int>&nums, int& newNum)
 static int uniqueRand(int min, int max, int notAllowed)
 {
     int randNum = rand()%max + min;
-    while(!(randNum xor notAllowed))
+    while(randNum == notAllowed)
     {
         randNum =  rand()%max + min;
     }
@@ -258,6 +258,20 @@ static void createSystemBrutal(solarSystemCreator& solarSystem)
         case 0:
         {
             // similar
+            solarSystem.numErrorsBrutal = int(rand() % (solarSystem.size - 2) / 2);
+            int whereErrors = int(rand() % 3);
+            switch (whereErrors)
+            {
+            case 0:
+                createRandErrorPlanetPos(solarSystem);
+                break;
+            case 1:
+                createErrorPlanetsBeg(solarSystem);
+                break;
+            case 2:
+                createErrorPlanetsEnd(solarSystem);
+                break;
+            }
             solarSystem.ans = "similar";
             solarSystem.commonSize = int(rand() % sun);
             similar(solarSystem);
