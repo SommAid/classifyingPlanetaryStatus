@@ -38,7 +38,7 @@ static int uniqueRand(int min, int max, int notAllowed)
 }
 
 // creates a vector of positions where error planets will be random
-static void createRandErrorPlanetPos(solarSystemCreator& solarSystem)
+static void createErrorPlanetsRand(solarSystemCreator& solarSystem)
 {
     int randNum, errorSize = 0;
     while (errorSize < solarSystem.numErrors)
@@ -63,6 +63,22 @@ static void createErrorPlanetsEnd(solarSystemCreator& solarSystem)
 {
     for(int j = 0; j < solarSystem.numErrors; j++) {
         solarSystem.posErrors.push_back(solarSystem.size - 2 - j);
+    }
+}
+static void randErrorType(solarSystemCreator& solarSystem)
+{
+    int whereErrors = int(rand() % 3);
+    switch (whereErrors)
+    {
+    case 0:
+        createErrorPlanetsRand(solarSystem);
+        break;
+    case 1:
+        createErrorPlanetsBeg(solarSystem);
+        break;
+    case 2:
+        createErrorPlanetsEnd(solarSystem);
+        break;
     }
 }
 
@@ -192,7 +208,7 @@ static void createSystemEz(solarSystemCreator& solarSystem)
 {
     solarSystem.size = int(rand() % 100) + 100;
     solarSystem.numErrors = int(rand() % 3);
-    createRandErrorPlanetPos(solarSystem);
+    createErrorPlanetsRand(solarSystem);
     createSolarSystem(solarSystem);
 }
 
@@ -201,7 +217,7 @@ static void createSystemMed(solarSystemCreator& solarSystem)
 {
     solarSystem.size = int(rand() % 500) + 250;
     solarSystem.numErrors = int(rand() % 10);
-    createRandErrorPlanetPos(solarSystem);
+    createErrorPlanetsRand(solarSystem);
     createSolarSystem(solarSystem);
 }
 
@@ -210,7 +226,7 @@ static void createSystemHard(solarSystemCreator& solarSystem)
 {
     solarSystem.size = int(rand() % 1000) + 500;
     solarSystem.numErrors = int(rand() % 50);
-    createRandErrorPlanetPos(solarSystem);
+    createErrorPlanetsRand(solarSystem);
     createSolarSystem(solarSystem);
 }
 
@@ -236,23 +252,8 @@ static void createSystemEndErrors(solarSystemCreator& solarSystem)
 static void createSystemBrutal(solarSystemCreator& solarSystem)
 {
     solarSystem.size = int(rand() % 500) + 1000;
-    solarSystem.numErrorsBrutal = int(rand() % 50) + 5;
-    int whereErrors = int(rand()%3);
-    switch (whereErrors)
-    {
-        case 0:
-            createRandErrorPlanetPos(solarSystem);
-            break;
-        case 1:
-            createErrorPlanetsBeg(solarSystem);
-            break;
-        case 2:
-            createErrorPlanetsEnd(solarSystem);
-            break;
-    }
-
     // if mixed solar system is created make it use a combination of similar, mixed, antiOrdered, and ordered
-    int type = 4;//rand() % 5;
+    int type = rand() % 5;
     int sun = 100000000;
     solarSystem.planets.push_back(sun);
     switch (type)
@@ -261,19 +262,8 @@ static void createSystemBrutal(solarSystemCreator& solarSystem)
         {
             // similar
             solarSystem.numErrorsBrutal = int(rand() % (solarSystem.size - 2) / 2);
-            int whereErrors = int(rand() % 3);
-            switch (whereErrors)
-            {
-            case 0:
-                createRandErrorPlanetPos(solarSystem);
-                break;
-            case 1:
-                createErrorPlanetsBeg(solarSystem);
-                break;
-            case 2:
-                createErrorPlanetsEnd(solarSystem);
-                break;
-            }
+            solarSystem.numErrors = solarSystem.numErrorsBrutal;
+            randErrorType(solarSystem);
             solarSystem.ans = "similar";
             solarSystem.commonSize = int(rand() % sun);
             similar(solarSystem);
@@ -282,7 +272,10 @@ static void createSystemBrutal(solarSystemCreator& solarSystem)
         case 1:
         {
             // antiOrdered
-            solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
+            solarSystem.numErrorsBrutal = int(rand() % 50) + 5;
+            solarSystem.numErrors = solarSystem.numErrorsBrutal;
+            randErrorType(solarSystem);
+            solarSystem.startingSize = int(rand() % (sun - 200001) + 200000);
             antiOrdered(solarSystem);
             solarSystem.ans = "antiordered";
             return;
@@ -290,7 +283,10 @@ static void createSystemBrutal(solarSystemCreator& solarSystem)
         case 2:
         {
             // ordered
-            solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
+            solarSystem.numErrorsBrutal = int(rand() % 50) + 5;
+            solarSystem.numErrors = solarSystem.numErrorsBrutal;
+            randErrorType(solarSystem);
+            solarSystem.startingSize = int(rand() % (sun - 400000) + 200000);
             ordered(solarSystem);
             solarSystem.ans = "ordered";
             return;
@@ -299,21 +295,12 @@ static void createSystemBrutal(solarSystemCreator& solarSystem)
         {
             // Brutal Mixed
             solarSystem.ans = "mixed";
-            std::cout << "BRUTAL MIXED SYSTEM::GL\n";
             int brutalSystem = rand() % 4;
+
+            solarSystem.numErrorsBrutal = int(rand() % 50) + 5;
             solarSystem.numErrors = int(rand()%20)+solarSystem.numErrorsBrutal + 1;
-            switch (whereErrors)
-            {
-                case 0:
-                    createRandErrorPlanetPos(solarSystem);
-                    break;
-                case 1:
-                    createErrorPlanetsBeg(solarSystem);
-                    break;
-                case 2:
-                    createErrorPlanetsEnd(solarSystem);
-                    break;
-            }
+            randErrorType(solarSystem);
+
             switch(brutalSystem)
             {
                 case 0:
