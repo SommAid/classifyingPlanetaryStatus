@@ -5,34 +5,25 @@
 #ifndef CLASSIFYINGPLANETARYSTATUS_MYPROBLEM_H
 #define CLASSIFYINGPLANETARYSTATUS_MYPROBLEM_H
 
-#endif //CLASSIFYINGPLANETARYSTATUS_MYPROBLEM_H
-
 #include <iostream>
 #include <vector>
+#include <algorithm>
+#include <random>
 
 // Struct that contains all the pertinent information for creating a solar system
-typedef struct solarSystemCreator{
-    std::vector<int> planets {}, posErrors {}, posBrutalErrors {};
+typedef struct solarSystemCreator {
+    std::vector<int> planets{}, posErrors{}, posBrutalErrors{};
     int size, startingSize, commonSize, numErrors, numErrorsBrutal;
     std::string ans;
 }solarSystemCreator;
 
-// checks if newNum is in nums if so true else false
-static bool findNum(std::vector<int>&nums, int& newNum)
-{
-    for(const int& i: nums)
-        if (i == newNum)
-            return true;
-    return false;
-}
-
 // just wanted an excuse for xor shenanigans
 static int uniqueRand(int min, int max, int notAllowed)
 {
-    int randNum = rand()%max + min;
-    while(randNum == notAllowed)
+    int randNum = rand() % max + min;
+    while (randNum == notAllowed)
     {
-        randNum =  rand()%max + min;
+        randNum = rand() % max + min;
     }
     return randNum;
 }
@@ -44,25 +35,25 @@ static void createErrorPlanetsRand(solarSystemCreator& solarSystem)
     while (errorSize < solarSystem.numErrors)
     {
         randNum = (int)(rand() % solarSystem.size);
-        if (!findNum(solarSystem.posErrors, randNum))
+        if (std::find(solarSystem.posErrors.cbegin(), solarSystem.posErrors.cend(), randNum) == solarSystem.posErrors.cend())
         {
             errorSize++;
-            solarSystem.posErrors.push_back(randNum);
+            solarSystem.posErrors.emplace_back(randNum);
         }
     }
 }
 // creates a vector of positions where error planets will be at the beginning
 static void createErrorPlanetsBeg(solarSystemCreator& solarSystem)
 {
-    for(int j = 0; j < solarSystem.numErrors; j++) {
-        solarSystem.posErrors.push_back(j);
+    for (int j = 0; j < solarSystem.numErrors; j++) {
+        solarSystem.posErrors.emplace_back(j);
     }
 }
 // creates a vector of positions where error planets will be at the end
 static void createErrorPlanetsEnd(solarSystemCreator& solarSystem)
-{
-    for(int j = 0; j < solarSystem.numErrors; j++) {
-        solarSystem.posErrors.push_back(solarSystem.size - 2 - j);
+{    
+    for (int j = 0; j < solarSystem.numErrors; j++) {
+        solarSystem.posErrors.emplace_back(solarSystem.size - 2 - j);
     }
 }
 static void randErrorType(solarSystemCreator& solarSystem)
@@ -87,21 +78,17 @@ static void similar(solarSystemCreator& solarSystem)
 {
     for (int j = 0; j < solarSystem.size; j++)
     {
-        if (findNum(solarSystem.posErrors, j))
-            solarSystem.planets.push_back(uniqueRand(0, solarSystem.planets[0], solarSystem.commonSize));
+        if (std::find(solarSystem.posErrors.cbegin(), solarSystem.posErrors.cend(), j) != solarSystem.posErrors.cend())
+            solarSystem.planets.emplace_back(uniqueRand(0, solarSystem.planets[0], solarSystem.commonSize));
         else
-            solarSystem.planets.push_back(solarSystem.commonSize);
+            solarSystem.planets.emplace_back(solarSystem.commonSize);
     }
 }
 
 // creates a solar system with mixed planets
 static void mixed(solarSystemCreator& solarSystem)
 {
-    for (int i = 0; i < solarSystem.size; i++)
-    {
-        int planetSize = rand() % 10000000;
-        solarSystem.planets.push_back(planetSize);
-    }
+    solarSystem.planets.insert(solarSystem.planets.cend(), solarSystem.size, rand() % 10000000);
 }
 
 // creates a solar system were the planets are arranged from largest to smallest
@@ -110,19 +97,19 @@ static void antiOrdered(solarSystemCreator& solarSystem)
     int prevNotError = solarSystem.startingSize, decreaseAmt = solarSystem.startingSize / solarSystem.size + 1, isFirstInserted = false;
     for (int j = 0; j < solarSystem.size - 1; j++)
     {
-        if (findNum(solarSystem.posErrors, j) && !isFirstInserted)
-            solarSystem.planets.push_back(rand() % (solarSystem.startingSize - decreaseAmt * solarSystem.numErrors));
-        else if (findNum(solarSystem.posErrors, j))
-            solarSystem.planets.push_back(rand() % (solarSystem.planets[0] - prevNotError - 1)+(prevNotError + 1));
+        if ((std::find(solarSystem.posErrors.cbegin(), solarSystem.posErrors.cend(), j) != solarSystem.posErrors.cend()) && !isFirstInserted)
+            solarSystem.planets.emplace_back(rand() % (solarSystem.startingSize - decreaseAmt * solarSystem.numErrors));
+        else if (std::find(solarSystem.posErrors.cbegin(), solarSystem.posErrors.cend(), j) != solarSystem.posErrors.cend())
+            solarSystem.planets.emplace_back(rand() % (solarSystem.planets[0] - prevNotError - 1) + (prevNotError + 1));
         else if (!isFirstInserted)
         {
             isFirstInserted = true;
-            solarSystem.planets.push_back(solarSystem.startingSize);
+            solarSystem.planets.emplace_back(solarSystem.startingSize);
         }
         else
         {
             prevNotError = prevNotError - int(rand() % decreaseAmt) - 1;
-            solarSystem.planets.push_back(prevNotError);
+            solarSystem.planets.emplace_back(prevNotError);
         }
     }
 
@@ -131,24 +118,24 @@ static void antiOrdered(solarSystemCreator& solarSystem)
 // creates a solar system were the planets are arranged from smallest to largest
 static void ordered(solarSystemCreator& solarSystem)
 {
-    int prevNotError = solarSystem.startingSize, IncreaseAmt = solarSystem.startingSize / solarSystem.size + 1, isFirstInserted = false;
+    int prevNotError = solarSystem.startingSize, increaseAmt = solarSystem.startingSize / solarSystem.size + 1, isFirstInserted = false;
     for (int j = 0; j < solarSystem.size; j++)
     {
-        if (findNum(solarSystem.posErrors, j) && !isFirstInserted)
+        if ((std::find(solarSystem.posErrors.cbegin(), solarSystem.posErrors.cend(), j) != solarSystem.posErrors.cend()) && !isFirstInserted)
         {
-            solarSystem.planets.push_back(rand() % (solarSystem.planets[0] - (solarSystem.startingSize) - 1) + (solarSystem.startingSize + IncreaseAmt * solarSystem.numErrors) + 1);
+            solarSystem.planets.emplace_back(rand() % (solarSystem.planets[0] - (solarSystem.startingSize) - 1) + (solarSystem.startingSize + increaseAmt * solarSystem.numErrors) + 1);
         }
-        else if (findNum(solarSystem.posErrors, j))
-            solarSystem.planets.push_back(rand() % (prevNotError));
+        else if (std::find(solarSystem.posErrors.cbegin(), solarSystem.posErrors.cend(), j) != solarSystem.posErrors.cend())
+            solarSystem.planets.emplace_back(rand() % (prevNotError));
         else if (!isFirstInserted)
         {
             isFirstInserted = true;
-            solarSystem.planets.push_back(solarSystem.startingSize);
+            solarSystem.planets.emplace_back(solarSystem.startingSize);
         }
         else
         {
-            prevNotError = 1 + prevNotError + int(rand() % IncreaseAmt);
-            solarSystem.planets.push_back(prevNotError);
+            prevNotError = 1 + prevNotError + int(rand() % increaseAmt);
+            solarSystem.planets.emplace_back(prevNotError);
         }
     }
 }
@@ -166,40 +153,40 @@ static void createSolarSystem(solarSystemCreator& solarSystem)
 {
     int type = rand() % 4;
     int sun = 100000000;
-    solarSystem.planets.push_back(sun);
+    solarSystem.planets.emplace_back(sun);
     switch (type)
     {
-        case 0:
-        {
-            // similar
-            solarSystem.ans = "similar";
-            solarSystem.commonSize = int(rand() % sun);
-            similar(solarSystem);
-            return;
-        }
-        case 1:
-        {
-            // mixed
-            mixed(solarSystem);
-            solarSystem.ans = "mixed";
-            return;
-        }
-        case 2:
-        {
-            // antiOrdered
-            solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
-            antiOrdered(solarSystem);
-            solarSystem.ans = "antiordered";
-            return;
-        }
-        case 3:
-        {
-            // ordered
-            solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
-            ordered(solarSystem);
-            solarSystem.ans = "ordered";
-            return;
-        }
+    case 0:
+    {
+        // similar
+        solarSystem.ans = "similar";
+        solarSystem.commonSize = int(rand() % sun);
+        similar(solarSystem);
+        return;
+    }
+    case 1:
+    {
+        // mixed
+        mixed(solarSystem);
+        solarSystem.ans = "mixed";
+        return;
+    }
+    case 2:
+    {
+        // antiOrdered
+        solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
+        antiOrdered(solarSystem);
+        solarSystem.ans = "antiordered";
+        return;
+    }
+    case 3:
+    {
+        // ordered
+        solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
+        ordered(solarSystem);
+        solarSystem.ans = "ordered";
+        return;
+    }
     }
 }
 
@@ -255,73 +242,77 @@ static void createSystemBrutal(solarSystemCreator& solarSystem)
     // if mixed solar system is created make it use a combination of similar, mixed, antiOrdered, and ordered
     int type = rand() % 5;
     int sun = 100000000;
-    solarSystem.planets.push_back(sun);
+    solarSystem.planets.emplace_back(sun);
     switch (type)
     {
-        case 0:
+    case 0:
+    {
+        // similar
+        solarSystem.numErrorsBrutal = int(rand() % (solarSystem.size - 2) / 2);
+        solarSystem.numErrors = solarSystem.numErrorsBrutal;
+        randErrorType(solarSystem);
+        solarSystem.ans = "similar";
+        solarSystem.commonSize = int(rand() % sun);
+        similar(solarSystem);
+        return;
+    }
+    case 1:
+    {
+        // antiOrdered
+        solarSystem.numErrorsBrutal = int(rand() % 50) + 5;
+        solarSystem.numErrors = solarSystem.numErrorsBrutal;
+        randErrorType(solarSystem);
+        solarSystem.startingSize = int(rand() % (sun - 200001) + 200000);
+        antiOrdered(solarSystem);
+        solarSystem.ans = "antiordered";
+        return;
+    }
+    case 2:
+    {
+        // ordered
+        solarSystem.numErrorsBrutal = int(rand() % 50) + 5;
+        solarSystem.numErrors = solarSystem.numErrorsBrutal;
+        randErrorType(solarSystem);
+        solarSystem.startingSize = int(rand() % (sun - 400000) + 200000);
+        ordered(solarSystem);
+        solarSystem.ans = "ordered";
+        return;
+    }
+    default:
+    {
+        // Brutal Mixed
+        solarSystem.ans = "mixed";
+        int brutalSystem = rand() % 4;
+
+        solarSystem.numErrorsBrutal = int(rand() % 50) + 5;
+        solarSystem.numErrors = int(rand() % 20) + solarSystem.numErrorsBrutal + 1;
+        randErrorType(solarSystem);
+
+        switch (brutalSystem)
         {
-            // similar
-            solarSystem.numErrorsBrutal = int(rand() % (solarSystem.size - 2) / 2);
-            solarSystem.numErrors = solarSystem.numErrorsBrutal;
-            randErrorType(solarSystem);
-            solarSystem.ans = "similar";
+        case 0:
+            mixed(solarSystem);
+            return;
+        case 1:
+            solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
+            ordered(solarSystem);
+            return;
+        case 2:
             solarSystem.commonSize = int(rand() % sun);
             similar(solarSystem);
             return;
-        }
-        case 1:
-        {
-            // antiOrdered
-            solarSystem.numErrorsBrutal = int(rand() % 50) + 5;
-            solarSystem.numErrors = solarSystem.numErrorsBrutal;
-            randErrorType(solarSystem);
-            solarSystem.startingSize = int(rand() % (sun - 200001) + 200000);
+        case 3:
+            solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
             antiOrdered(solarSystem);
-            solarSystem.ans = "antiordered";
             return;
         }
-        case 2:
-        {
-            // ordered
-            solarSystem.numErrorsBrutal = int(rand() % 50) + 5;
-            solarSystem.numErrors = solarSystem.numErrorsBrutal;
-            randErrorType(solarSystem);
-            solarSystem.startingSize = int(rand() % (sun - 400000) + 200000);
-            ordered(solarSystem);
-            solarSystem.ans = "ordered";
-            return;
-        }
-        default:
-        {
-            // Brutal Mixed
-            solarSystem.ans = "mixed";
-            int brutalSystem = rand() % 4;
-
-            solarSystem.numErrorsBrutal = int(rand() % 50) + 5;
-            solarSystem.numErrors = int(rand()%20)+solarSystem.numErrorsBrutal + 1;
-            randErrorType(solarSystem);
-
-            switch(brutalSystem)
-            {
-                case 0:
-                    mixed(solarSystem);
-                    return;
-                case 1:
-                    solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
-                    ordered(solarSystem);
-                    return;
-                case 2:
-                    solarSystem.commonSize = int(rand() % sun);
-                    similar(solarSystem);
-                    return;
-                case 3:
-                    solarSystem.startingSize = int(rand() % (sun - (solarSystem.size + 1)) + (solarSystem.size + 1));
-                    antiOrdered(solarSystem);
-                    return;
-            }
-            return;
-        }
+        return;
+    }
 
     }
     createSolarSystem(solarSystem);
 }
+
+#endif //CLASSIFYINGPLANETARYSTATUS_MYPROBLEM_H
+
+

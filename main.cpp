@@ -17,6 +17,7 @@
 #include "myProblem.h"
 #include <string>
 #include <map>
+#include <chrono>
 
 static void print(std::vector<int>& solarSystem, std::vector<int>& posErrors);
 static void print(std::vector<int>& solarSystem);
@@ -206,7 +207,7 @@ static std::string classifyPlanetarySystem(std::vector<int>& solarSystem, int nu
     {
         return "mixed";
     }
-};
+}
 
 // This is a main function of all time
 int main()
@@ -224,7 +225,8 @@ int main()
     srand(time(0));
     std::vector<int> foundErrors;
     bool errorOccured = false;
-    for(int j = 0; j < 100 && !errorOccured; j++) {
+    auto start = std::chrono::high_resolution_clock::now();
+    for(int j = 0; j < 10000 && !errorOccured; j++) {
         solarSystemCreator creator;
         createSystemBrutal(creator);
         std::string a = classifyPlanetarySystem(creator.planets, creator.numErrorsBrutal);
@@ -238,10 +240,12 @@ int main()
             errorOccured = true;
         }
     }
+    auto stop = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start);
     if(!errorOccured)
-        std::cout << "TEST PASSED\n";
+        std::cout << "TEST PASSED in : " << duration.count() << "\n";
     else
-        std::cout << "TEST FAILED\n";
+        std::cout << "TEST FAILED in : " << duration.count() << "\n";
     return 0;
 }
 
@@ -263,7 +267,7 @@ static void print(std::vector<int>& solarSystem, std::vector<int>& posErrors)
     for (int iter = 0; iter < solarSystem.size(); iter++)
     {
         curr = iter-1;
-        if (findNum(posErrors, curr))
+        if (std::find(posErrors.cbegin(), posErrors.cend(), curr) != posErrors.cend())
         {
             std::cout << pos++ << " : " << solarSystem[iter] << "<---Error\n";
         }
